@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>웹툰 콘티 메이커</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f0f13; --bg2: #16161d; --bg3: #1e1e28;
+  --border: #2a2a3a; --accent: #7c6cfc; --accent2: #fc6ca8;
+  --text: #e8e8f0; --text2: #888899; --text3: #555566;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.logo { font-size: 15px; font-weight: 700; color: var(--accent); }
+.header-steps { display: flex; gap: 4px; }
+.step-pill { font-size: 11px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+.step-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.main { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 200px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+.ss { padding: 12px; border-bottom: 1px solid var(--border); }
+.st { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.btn { width: 100%; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-size: 12px; cursor: pointer; transition: all 0.15s; text-align: center; display: block; }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn+.btn { margin-top: 5px; }
+.grow { display: flex; gap: 5px; }
+.grow .btn { flex: 1; }
+.pg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.pb { padding: 5px 4px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 11px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.pb:hover { border-color: var(--accent2); color: var(--accent2); }
+.jg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.jb { padding: 5px 3px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 10px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.jb:hover { border-color: var(--accent); color: var(--accent); }
+.jb.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sw { margin-bottom: 7px; }
+.sl { display: flex; justify-content: space-between; font-size: 10px; color: var(--text2); margin-bottom: 3px; }
+.sl span { color: var(--accent); font-weight: 600; }
+input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.center { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.tabs { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 18px; font-size: 12px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+.panel { flex: 1; display: none; overflow: hidden; }
+.panel.on { display: flex; flex-direction: column; }
+#tc { flex: 1; background: #080810; position: relative; }
+#tc canvas { display: block; width: 100%; height: 100%; }
+.hint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); color: var(--text2); font-size: 11px; padding: 4px 12px; border-radius: 20px; pointer-events: none; white-space: nowrap; }
+#ai-panel { padding: 16px; overflow-y: auto; }
+.ar { display: flex; gap: 14px; margin-bottom: 14px; }
+.aib { flex: 1; }
+.aib label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 5px; }
+.akey { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; color: var(--text); font-size: 12px; }
+.akey:focus { outline: none; border-color: var(--accent); }
+.sp { width: 140px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; min-height: 100px; }
+.sp img { width: 100%; display: block; }
+.sp .ns { padding: 12px; text-align: center; font-size: 11px; color: var(--text3); }
+.rg { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 10px; margin-top: 12px; }
+.rc { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.15s; }
+.rc:hover { border-color: var(--accent); transform: translateY(-2px); }
+.rc img { width: 100%; display: block; }
+.rc .rl { padding: 6px 8px; font-size: 10px; color: var(--text2); }
+.ld { display: none; text-align: center; padding: 30px; color: var(--text2); font-size: 13px; }
+.ld.on { display: block; }
+.sm { font-size: 11px; padding: 7px 10px; border-radius: 7px; margin-bottom: 10px; }
+.sok { background: rgba(124,108,252,0.1); border: 1px solid rgba(124,108,252,0.3); color: var(--accent); }
+.ser { background: rgba(252,108,168,0.1); border: 1px solid rgba(252,108,168,0.3); color: var(--accent2); }
+#canvas-panel { flex-direction: column; }
+#cc { flex: 1; background: #fff; display: block; width: 100%; }
+.ctb { background: var(--bg2); border-top: 1px solid var(--border); padding: 7px 12px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+.tb { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); font-size: 11px; cursor: pointer; transition: all 0.12s; }
+.tb:hover,.tb.on { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">웹툰 콘티 메이커</div>
+  <div class="header-steps">
+    <div class="step-pill active" onclick="sw('pose')">① 포즈 설정</div>
+    <div class="step-pill" onclick="sw('ai')">② AI 변환</div>
+    <div class="step-pill" onclick="sw('canvas')">③ 콘티 편집</div>
+  </div>
+</header>
+<div class="main">
+  <div class="sidebar">
+    <div class="ss"><div class="st">성별</div>
+      <div class="grow">
+        <button class="btn on" id="bm" onclick="sg('male')">남성</button>
+        <button class="btn" id="bf" onclick="sg('female')">여성</button>
+      </div>
+    </div>
+    <div class="ss"><div class="st">포즈 프리셋</div>
+      <div class="pg">
+        <button class="pb" onclick="ap('stand')">차렷</button>
+        <button class="pb" onclick="ap('tpose')">T포즈</button>
+        <button class="pb" onclick="ap('sit')">앉기</button>
+        <button class="pb" onclick="ap('fight')">전투</button>
+        <button class="pb" onclick="ap('run')">달리기</button>
+        <button class="pb" onclick="ap('think')">생각</button>
+      </div>
+    </div>
+    <div class="ss"><div class="st">관절 선택</div>
+      <div class="jg" id="jg">
+        <button class="jb on" data-j="head" onclick="sj('head')">머리</button>
+        <button class="jb" data-j="neck" onclick="sj('neck')">목</button>
+        <button class="jb" data-j="torso" onclick="sj('torso')">척추</button>
+        <button class="jb" data-j="pelvis" onclick="sj('pelvis')">골반</button>
+        <button class="jb" data-j="ls" onclick="sj('ls')">왼어깨</button>
+        <button class="jb" data-j="rs" onclick="sj('rs')">오른어깨</button>
+        <button class="jb" data-j="le" onclick="sj('le')">왼팔꿈치</button>
+        <button class="jb" data-j="re" onclick="sj('re')">오른팔꿈치</button>
+        <button class="jb" data-j="lh" onclick="sj('lh')">왼고관절</button>
+        <button class="jb" data-j="rh" onclick="sj('rh')">오른고관절</button>
+        <button class="jb" data-j="lk" onclick="sj('lk')">왼무릎</button>
+        <button class="jb" data-j="rk" onclick="sj('rk')">오른무릎</button>
+        <button class="jb" data-j="la" onclick="sj('la')">왼발목</button>
+        <button class="jb" data-j="ra" onclick="sj('ra')">오른발목</button>
+      </div>
+    </div>
+    <div class="ss"><div class="st">관절 회전</div>
+      <div class="sw"><div class="sl">굽힘 <span id="vb">0°</span></div><input type="range" id="sb" min="-150" max="150" value="0" step="1" oninput="sr('b',this.value)"></div>
+      <div class="sw"><div class="sl">기울기 <span id="vt">0°</span></div><input type="range" id="st2" min="-150" max="150" value="0" step="1" oninput="sr('t',this.value)"></div>
+      <div class="sw"><div class="sl">회전 <span id="vu">0°</span></div><input type="range" id="su" min="-150" max="150" value="0" step="1" oninput="sr('u',this.value)"></div>
+    </div>
+    <div class="ss"><div class="st">카메라</div>
+      <div class="pg">
+        <button class="pb" onclick="sc2(0,0.4,10)">아이레벨</button>
+        <button class="pb" onclick="sc2(0,0.9,8)">하이앵글</button>
+        <button class="pb" onclick="sc2(0,0.1,10)">로우앵글</button>
+        <button class="pb" onclick="sc2(0,1.3,6)">버즈아이</button>
+      </div>
+    </div>
+    <div class="ss">
+      <button class="btn pri" onclick="snap()">📸 스냅샷 → AI 변환</button>
+      <button class="btn" onclick="dlSnap()" style="margin-top:5px;">PNG 저장</button>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="tabs">
+      <div class="tab on" id="tab-pose" onclick="sw('pose')">3D 포즈</div>
+      <div class="tab" id="tab-ai" onclick="sw('ai')">AI 변환</div>
+      <div class="tab" id="tab-canvas" onclick="sw('canvas')">콘티 캔버스</div>
+    </div>
+    <div class="panel on" id="pose-panel">
+      <div id="tc"><div class="hint">드래그: 회전 | 스크롤: 줌</div></div>
+    </div>
+    <div class="panel" id="ai-panel">
+      <div class="ar">
+        <div class="aib">
+          <label style="color:#7c6cfc;font-size:12px;">API 키는 Netlify 환경변수에 설정되어 있어요. 아래 버튼을 바로 누르세요!</label>
+          <button class="btn pri" style="margin-top:8px;width:auto;padding:8px 20px;" onclick="genAI()">AI로 웹툰 스타일 변환 →</button>
+        </div>
+        <div class="sp" id="sp"><div class="ns">스냅샷을<br>먼저 찍어주세요</div></div>
+      </div>
+      <div id="sa"></div>
+      <div class="ld" id="ld">AI가 웹툰 스타일로 변환 중... ✍️</div>
+      <div class="rg" id="rg"></div>
+    </div>
+    <div class="panel" id="canvas-panel">
+      <canvas id="cc"></canvas>
+      <div class="ctb">
+        <button class="tb on" id="tool-select" onclick="st3('select')">선택/이동</button>
+        <button class="tb" id="tool-pen" onclick="st3('pen')">펜</button>
+        <button class="tb" onclick="addB()">말풍선</button>
+        <button class="tb" onclick="addT()">텍스트</button>
+        <input type="color" value="#000000" id="pc" style="width:26px;height:26px;border:none;cursor:pointer;border-radius:4px;">
+        <input type="range" min="1" max="20" value="2" id="ps" style="width:70px;accent-color:#7c6cfc;">
+        <button class="tb" onclick="clrC()">지우기</button>
+        <button class="tb" onclick="expC()">PNG 내보내기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const tc = document.getElementById('tc');
+const ren = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+ren.setPixelRatio(window.devicePixelRatio);
+tc.appendChild(ren.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080810);
+
+const cam = new THREE.PerspectiveCamera(45,1,0.1,100);
+cam.position.set(0,5,10);
+cam.lookAt(0,1,0);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
+const dl = new THREE.DirectionalLight(0xffffff,0.8);
+dl.position.set(5,10,5); scene.add(dl);
+scene.add(new THREE.GridHelper(10,20,0x1a1a2e,0x16162a));
+
+const D = Math.PI/180;
+const mats = {
+  ms: new THREE.MeshLambertMaterial({color:0xc8a882}),
+  fs: new THREE.MeshLambertMaterial({color:0xddb896}),
+  mj: new THREE.MeshLambertMaterial({color:0x9a7a5a}),
+  fj: new THREE.MeshLambertMaterial({color:0xbb8866}),
+};
+
+function cyl(rT,rB,h,m){return new THREE.Mesh(new THREE.CylinderGeometry(rT,rB,h,10),m);}
+function sph(r,m){return new THREE.Mesh(new THREE.SphereGeometry(r,10,10),m);}
+function box(w,h,d,m){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);}
+function grp(){return new THREE.Group();}
+
+let fig=null, gender='male';
+const js={head:{b:0,t:0,u:0},neck:{b:0,t:0,u:0},torso:{b:0,t:0,u:0},pelvis:{b:0,t:0,u:0},
+  ls:{b:-5,t:0,u:0},rs:{b:5,t:0,u:0},le:{b:0,t:0,u:0},re:{b:0,t:0,u:0},
+  lh:{b:0,t:0,u:0},rh:{b:0,t:0,u:0},lk:{b:0,t:0,u:0},rk:{b:0,t:0,u:0},
+  la:{b:0,t:0,u:0},ra:{b:0,t:0,u:0}};
+
+function build(g){
+  const f=g==='female', s=f?mats.fs:mats.ms, j=f?mats.fj:mats.mj;
+  const r=grp(); r.position.set(0,1.2,0);
+
+  // pelvis
+  const pg=grp(); const pm=box(f?.7:.65,.4,.3,s); pg.add(pm); r.add(pg);
+  // torso
+  const tg=grp(); tg.position.set(0,.4,0);
+  const tm=cyl(f?.28:.32,f?.22:.28,1,s); tm.position.set(0,.5,0); tg.add(tm);
+  if(f){const bL=sph(.18,s);bL.position.set(-.14,.7,.12);tg.add(bL);const bR=sph(.18,s);bR.position.set(.14,.7,.12);tg.add(bR);}
+  pg.add(tg);
+  // neck
+  const ng=grp(); ng.position.set(0,1.05,0);
+  const nm=cyl(.1,.12,.25,s); nm.position.set(0,.12,0); ng.add(nm); tg.add(ng);
+  // head
+  const hg=grp(); hg.position.set(0,.25,0); hg.add(sph(f?.25:.27,s)); ng.add(hg);
+  // left arm
+  const lsg=grp(); lsg.position.set(f?-.38:-.42,.9,0); lsg.add(sph(.1,j));
+  const lua=grp(); const lum=cyl(.08,.1,.55,s); lum.position.set(0,-.28,0); lua.add(lum); lsg.add(lua); tg.add(lsg);
+  const leg=grp(); leg.position.set(0,-.55,0); leg.add(sph(.08,j));
+  const lfa=cyl(.07,.08,.5,s); lfa.position.set(0,-.25,0); leg.add(lfa); lua.add(leg);
+  const lwg=grp(); lwg.position.set(0,-.5,0); lwg.add(box(.12,.16,.06,s)); leg.add(lwg);
+  // right arm
+  const rsg=grp(); rsg.position.set(f?.38:.42,.9,0); rsg.add(sph(.1,j));
+  const rua=grp(); const rum=cyl(.08,.1,.55,s); rum.position.set(0,-.28,0); rua.add(rum); rsg.add(rua); tg.add(rsg);
+  const reg=grp(); reg.position.set(0,-.55,0); reg.add(sph(.08,j));
+  const rfa=cyl(.07,.08,.5,s); rfa.position.set(0,-.25,0); reg.add(rfa); rua.add(reg);
+  const rwg=grp(); rwg.position.set(0,-.5,0); rwg.add(box(.12,.16,.06,s)); reg.add(rwg);
+  // left leg
+  const lhg=grp(); lhg.position.set(f?-.22:-.2,-.2,0); lhg.add(sph(.13,j));
+  const lth=grp(); const ltm=cyl(.12,.15,.85,s); ltm.position.set(0,-.43,0); lth.add(ltm); lhg.add(lth); pg.add(lhg);
+  const lkg=grp(); lkg.position.set(0,-.85,0); lkg.add(sph(.11,j));
+  const lsn=cyl(.09,.12,.8,s); lsn.position.set(0,-.4,0); lkg.add(lsn); lth.add(lkg);
+  const lag=grp(); lag.position.set(0,-.8,0); const lft=box(.14,.1,.28,s); lft.position.set(0,-.05,.06); lag.add(lft); lkg.add(lag);
+  // right leg
+  const rhg=grp(); rhg.position.set(f?.22:.2,-.2,0); rhg.add(sph(.13,j));
+  const rth=grp(); const rtm=cyl(.12,.15,.85,s); rtm.position.set(0,-.43,0); rth.add(rtm); rhg.add(rth); pg.add(rhg);
+  const rkg=grp(); rkg.position.set(0,-.85,0); rkg.add(sph(.11,j));
+  const rsn=cyl(.09,.12,.8,s); rsn.position.set(0,-.4,0); rkg.add(rsn); rth.add(rkg);
+  const rag=grp(); rag.position.set(0,-.8,0); const rft=box(.14,.1,.28,s); rft.position.set(0,-.05,.06); rag.add(rft); rkg.add(rag);
+
+  scene.add(r);
+  return{r,pg,tg,ng,hg,lsg,lua,leg,lwg,rsg,rua,reg,rwg,lhg,lth,lkg,lag,rhg,rth,rkg,rag};
+}
+
+function getGrp(n){if(!fig)return null;const m={head:fig.hg,neck:fig.ng,torso:fig.tg,pelvis:fig.pg,ls:fig.lua,rs:fig.rua,le:fig.leg,re:fig.reg,lh:fig.lth,rh:fig.rth,lk:fig.lkg,rk:fig.rkg,la:fig.lag,ra:fig.rag};return m[n];}
+function apJ(n){const g=getGrp(n);if(!g)return;const s=js[n];g.rotation.set(s.b*D,s.u*D,s.t*D);}
+function apAll(){Object.keys(js).forEach(apJ);}
+function rebuild(){if(fig)scene.remove(fig.r);fig=build(gender);apAll();}
+
+const PRES={
+  stand:{ls:{b:-5,t:0,u:0},rs:{b:5,t:0,u:0},le:{b:0,t:0,u:0},re:{b:0,t:0,u:0},lh:{b:0,t:0,u:0},rh:{b:0,t:0,u:0},lk:{b:0,t:0,u:0},rk:{b:0,t:0,u:0},torso:{b:0,t:0,u:0},head:{b:0,t:0,u:0}},
+  tpose:{ls:{b:0,t:30,u:-90},rs:{b:0,t:-30,u:90},le:{b:0,t:0,u:0},re:{b:0,t:0,u:0},lh:{b:0,t:0,u:0},rh:{b:0,t:0,u:0},lk:{b:0,t:0,u:0},rk:{b:0,t:0,u:0},torso:{b:0,t:0,u:0},head:{b:0,t:0,u:0}},
+  sit:{ls:{b:-5,t:0,u:0},rs:{b:5,t:0,u:0},le:{b:0,t:0,u:0},re:{b:0,t:0,u:0},lh:{b:90,t:0,u:0},rh:{b:90,t:0,u:0},lk:{b:-90,t:0,u:0},rk:{b:-90,t:0,u:0},torso:{b:0,t:0,u:0},head:{b:0,t:0,u:0}},
+  fight:{ls:{b:60,t:10,u:-20},rs:{b:-30,t:-5,u:10},le:{b:-80,t:0,u:0},re:{b:-40,t:0,u:0},lh:{b:-15,t:8,u:0},rh:{b:10,t:-5,u:0},lk:{b:10,t:0,u:0},rk:{b:-8,t:0,u:0},torso:{b:-5,t:0,u:20},head:{b:0,t:0,u:-20}},
+  run:{ls:{b:40,t:0,u:0},rs:{b:-40,t:0,u:0},le:{b:-80,t:0,u:0},re:{b:-80,t:0,u:0},lh:{b:-45,t:0,u:0},rh:{b:35,t:0,u:0},lk:{b:20,t:0,u:0},rk:{b:-30,t:0,u:0},torso:{b:10,t:0,u:0},head:{b:-5,t:0,u:0}},
+  think:{ls:{b:-5,t:0,u:0},rs:{b:60,t:0,u:0},le:{b:0,t:0,u:0},re:{b:-110,t:0,u:0},lh:{b:0,t:0,u:0},rh:{b:0,t:0,u:0},lk:{b:0,t:0,u:0},rk:{b:0,t:0,u:0},torso:{b:-5,t:0,u:0},head:{b:15,t:0,u:15}},
+};
+
+function ap(n){const p=PRES[n];if(!p)return;Object.keys(p).forEach(k=>{if(js[k])Object.assign(js[k],p[k]);});apAll();syncSl();}
+
+let selJ='head';
+function sj(n){selJ=n;document.querySelectorAll('.jb').forEach(b=>b.classList.toggle('on',b.dataset.j===n));syncSl();}
+function syncSl(){const s=js[selJ]||{b:0,t:0,u:0};document.getElementById('sb').value=s.b;document.getElementById('st2').value=s.t;document.getElementById('su').value=s.u;document.getElementById('vb').textContent=Math.round(s.b)+'°';document.getElementById('vt').textContent=Math.round(s.t)+'°';document.getElementById('vu').textContent=Math.round(s.u)+'°';}
+function sr(ax,val){js[selJ][ax]=+val;document.getElementById('v'+ax).textContent=Math.round(val)+'°';apJ(selJ);}
+
+function sg(g){gender=g;document.getElementById('bm').className='btn'+(g==='male'?' on':'');document.getElementById('bf').className='btn'+(g==='female'?' on':'');rebuild();}
+
+let drag=false,lx=0,ly=0,th=0,ph=0.4,cr=10;
+function updCam(){cam.position.x=cr*Math.sin(th)*Math.cos(ph);cam.position.y=cr*Math.sin(ph)+1;cam.position.z=cr*Math.cos(th)*Math.cos(ph);cam.lookAt(0,1,0);}
+function sc2(x,p,r){th=0;ph=p;cr=r;updCam();}
+
+ren.domElement.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;});
+window.addEventListener('mousemove',e=>{if(!drag)return;th-=(e.clientX-lx)*.008;ph=Math.max(-1.2,Math.min(1.2,ph+(e.clientY-ly)*.008));lx=e.clientX;ly=e.clientY;updCam();});
+window.addEventListener('mouseup',()=>drag=false);
+ren.domElement.addEventListener('wheel',e=>{cr=Math.max(3,Math.min(20,cr+e.deltaY*.01));updCam();e.preventDefault();},{passive:false});
+ren.domElement.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;});
+ren.domElement.addEventListener('touchmove',e=>{if(!drag)return;th-=(e.touches[0].clientX-lx)*.008;ph=Math.max(-1.2,Math.min(1.2,ph+(e.touches[0].clientY-ly)*.008));lx=e.touches[0].clientX;ly=e.touches[0].clientY;updCam();e.preventDefault();},{passive:false});
+ren.domElement.addEventListener('touchend',()=>drag=false);
+
+function rsz(){const w=tc.clientWidth,h=tc.clientHeight;ren.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}
+window.addEventListener('resize',rsz);
+function anim(){requestAnimationFrame(anim);ren.render(scene,cam);}
+
+let snapURL=null;
+function snap(){ren.render(scene,cam);snapURL=ren.domElement.toDataURL('image/png');document.getElementById('sp').innerHTML=`<img src="${snapURL}">`;sw('ai');}
+function dlSnap(){ren.render(scene,cam);const a=document.createElement('a');a.download='pose_'+Date.now()+'.png';a.href=ren.domElement.toDataURL();a.click();}
+
+async function genAI(){
+  if(!snapURL){sts('먼저 ① 포즈 탭에서 스냅샷을 찍어주세요!','er');return;}
+  document.getElementById('ld').classList.add('on');
+  document.getElementById('rg').innerHTML='';sts('','');
+
+  const prompt='anime webtoon line art, clean manga sketch, white background, no shading, black outlines only, full body character, professional storyboard conti style';
+
+  try{
+    const res=await fetch('/.netlify/functions/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt})
+    });
+    const data=await res.json();
+    if(data.error){sts('오류: '+data.error,'er');document.getElementById('ld').classList.remove('on');return;}
+    if(data.output&&data.output.length>0){
+      const src=data.output[0];
+      const c=document.createElement('div');c.className='rc';
+      c.innerHTML='<img src="'+src+'"><div class="rl">클릭 → 캔버스로 가져오기</div>';
+      c.onclick=()=>s2c(src);
+      document.getElementById('rg').appendChild(c);
+      sts('변환 완료! 이미지를 클릭해서 캔버스로 가져오세요.','ok');
+    }else{
+      sts('이미지 생성 실패. 다시 시도해주세요.','er');
+    }
+  }catch(e){sts('오류: '+e.message,'er');}
+  document.getElementById('ld').classList.remove('on');
+}
+
+function sts(msg,type){const el=document.getElementById('sa');if(!msg){el.innerHTML='';return;}el.innerHTML=`<div class="sm s${type}">${msg}</div>`;}
+
+let ctx2=null,citems=[],ctool='select',cdraw=false,cdx=0,cdy=0,dragIt=null,dox=0,doy=0;
+function initC(){
+  const cv=document.getElementById('cc'),panel=document.getElementById('canvas-panel');
+  cv.width=panel.clientWidth;cv.height=panel.clientHeight-44;
+  ctx2=cv.getContext('2d');ctx2.fillStyle='#fff';ctx2.fillRect(0,0,cv.width,cv.height);
+  cv.addEventListener('mousedown',e=>{const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    if(ctool==='select'){dragIt=null;for(let i=citems.length-1;i>=0;i--){const it=citems[i];if(mx>=it.x&&mx<=it.x+(it.w||100)&&my>=it.y&&my<=it.y+(it.h||50)){citems.forEach(x=>x.sel=false);it.sel=true;dragIt=it;dox=mx-it.x;doy=my-it.y;rdC();return;}}citems.forEach(x=>x.sel=false);rdC();}
+    else if(ctool==='pen'){cdraw=true;cdx=mx;cdy=my;ctx2.beginPath();ctx2.moveTo(mx,my);}
+  });
+  cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    if(dragIt){dragIt.x=mx-dox;dragIt.y=my-doy;rdC();}
+    else if(cdraw){ctx2.lineTo(mx,my);ctx2.strokeStyle=document.getElementById('pc').value;ctx2.lineWidth=document.getElementById('ps').value;ctx2.lineCap='round';ctx2.lineJoin='round';ctx2.stroke();}
+  });
+  cv.addEventListener('mouseup',()=>{cdraw=false;dragIt=null;});
+}
+
+function rdC(){if(!ctx2)return;const cv=document.getElementById('cc');ctx2.fillStyle='#fff';ctx2.fillRect(0,0,cv.width,cv.height);
+  for(const it of citems){
+    if(it.type==='img'){ctx2.drawImage(it.img,it.x,it.y,it.w,it.h);if(it.sel){ctx2.strokeStyle='#7c6cfc';ctx2.lineWidth=2;ctx2.strokeRect(it.x-2,it.y-2,it.w+4,it.h+4);}}
+    else if(it.type==='bub'){ctx2.beginPath();ctx2.ellipse(it.x+it.w/2,it.y+it.h/2,it.w/2,it.h/2,0,0,Math.PI*2);ctx2.fillStyle='#fff';ctx2.fill();ctx2.strokeStyle='#000';ctx2.lineWidth=2;ctx2.stroke();ctx2.font='13px sans-serif';ctx2.fillStyle='#000';ctx2.textAlign='center';ctx2.fillText(it.txt||'',it.x+it.w/2,it.y+it.h/2+5);ctx2.textAlign='left';}
+    else if(it.type==='txt'){ctx2.font='16px sans-serif';ctx2.fillStyle='#000';ctx2.fillText(it.txt,it.x,it.y);}
+  }
+}
+
+function s2c(src){const img=new Image();img.onload=()=>{citems.push({type:'img',img,x:30,y:30,w:200,h:280,sel:false});rdC();sw('canvas');};img.src=src;}
+function st3(t){ctool=t;document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));document.getElementById('tool-'+t)?.classList.add('on');document.getElementById('cc').style.cursor=t==='pen'?'crosshair':'default';}
+function addB(){const txt=prompt('말풍선 텍스트:')||'';citems.push({type:'bub',x:60,y:60,w:150,h:70,txt,sel:false});rdC();}
+function addT(){const txt=prompt('텍스트:')||'';if(txt){citems.push({type:'txt',x:80,y:100,txt,sel:false});rdC();}}
+function clrC(){if(confirm('캔버스를 초기화할까요?')){citems=[];rdC();}}
+function expC(){const a=document.createElement('a');a.download='conti_'+Date.now()+'.png';a.href=document.getElementById('cc').toDataURL();a.click();}
+
+function sw(n){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.step-pill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+n).classList.add('on');
+  document.getElementById(n+'-panel').classList.add('on');
+  const idx={pose:0,ai:1,canvas:2}[n];
+  document.querySelectorAll('.step-pill')[idx]?.classList.add('active');
+  if(n==='canvas'&&!ctx2)initC();
+}
+
+rsz(); updCam(); rebuild(); anim();
+
+const savedKey = localStorage.getItem("gmk");
+if(savedKey) document.getElementById("akey").value = savedKey;
+document.getElementById("akey").addEventListener("input", function(){ localStorage.setItem("gmk", this.value); });
+</script>
+</body>
+</html>
