@@ -4,19 +4,24 @@ exports.handler = async (event) => {
   }
 
   const REPLICATE_KEY = process.env.REPLICATE_API_KEY;
+  console.log('API KEY exists:', !!REPLICATE_KEY);
+  console.log('API KEY prefix:', REPLICATE_KEY ? REPLICATE_KEY.substring(0, 5) : 'NONE');
+  
   if (!REPLICATE_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: 'API 키가 설정되지 않았습니다.' }) };
   }
 
-  const { prompt, predId } = JSON.parse(event.body);
+  const body = JSON.parse(event.body);
+  const { prompt, predId } = body;
+  console.log('predId:', predId, 'prompt:', !!prompt);
 
   try {
-    // 폴링 모드: predId가 있으면 결과 확인
     if (predId) {
       const poll = await fetch('https://api.replicate.com/v1/predictions/' + predId, {
         headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
       });
       const pd = await poll.json();
+      console.log('poll status:', pd.status);
       return {
         statusCode: 200,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -24,7 +29,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // 생성 모드: 예측 시작만 함
+    console.log('Starting prediction...');
     const res = await fetch('https://api.replicate.com/v1/models/stability-ai/stable-diffusion/predictions', {
       method: 'POST',
       headers: {
@@ -44,6 +49,8 @@ exports.handler = async (event) => {
     });
 
     const data = await res.json();
+    console.log('Prediction response:', JSON.stringify(data).substring(0, 200));
+    
     if (data.error) {
       return { statusCode: 400, body: JSON.stringify({ error: data.error }) };
     }
@@ -55,6 +62,7 @@ exports.handler = async (event) => {
     };
 
   } catch (e) {
+    console.log('Error:', e.message);
     return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
   }
 };
