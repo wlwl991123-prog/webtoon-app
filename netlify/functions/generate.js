@@ -8,10 +8,23 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'API 키가 설정되지 않았습니다.' }) };
   }
 
-  const { prompt } = JSON.parse(event.body);
+  const { prompt, predId } = JSON.parse(event.body);
 
   try {
-    // 1단계: 예측 생성 (Prefer: wait 제거 - 타임아웃 방지)
+    // 폴링 모드: predId가 있으면 결과 확인
+    if (predId) {
+      const poll = await fetch('https://api.replicate.com/v1/predictions/' + predId, {
+        headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
+      });
+      const pd = await poll.json();
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: pd.status, output: pd.output, error: pd.error })
+      };
+    }
+
+    // 생성 모드: 예측 시작만 함
     const res = await fetch('https://api.replicate.com/v1/models/stability-ai/stable-diffusion/predictions', {
       method: 'POST',
       headers: {
@@ -35,28 +48,11 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: data.error }) };
     }
 
-    const predId = data.id;
-
-    // 2단계: 폴링 (최대 25초)
-    for (let i = 0; i < 12; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const poll = await fetch('https://api.replicate.com/v1/predictions/' + predId, {
-        headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
-      });
-      const pd = await poll.json();
-      if (pd.status === 'succeeded') {
-        return {
-          statusCode: 200,
-          headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-          body: JSON.stringify({ output: pd.output })
-        };
-      }
-      if (pd.status === 'failed') {
-        return { statusCode: 400, body: JSON.stringify({ error: pd.error || '생성 실패' }) };
-      }
-    }
-
-    return { statusCode: 400, body: JSON.stringify({ error: '타임아웃: 다시 시도해주세요.' }) };
+    return {
+      statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ predId: data.id, status: data.status })
+    };
 
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
