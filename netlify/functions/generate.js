@@ -1,27 +1,25 @@
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
   const REPLICATE_KEY = process.env.REPLICATE_API_KEY;
-  console.log('API KEY exists:', !!REPLICATE_KEY);
-  console.log('API KEY prefix:', REPLICATE_KEY ? REPLICATE_KEY.substring(0, 5) : 'NONE');
-  
+
   if (!REPLICATE_KEY) {
+    console.log('API 키가 설정되지 않았습니다.');
     return { statusCode: 500, body: JSON.stringify({ error: 'API 키가 설정되지 않았습니다.' }) };
   }
 
-  const body = JSON.parse(event.body);
-  const { prompt, predId } = body;
-  console.log('predId:', predId, 'prompt:', !!prompt);
+  console.log('API KEY exists: true');
+  console.log('API KEY prefix: ' + REPLICATE_KEY.substring(0, 5));
+
+  const { prompt, predId } = JSON.parse(event.body);
+  console.log('predId: ' + predId + ' prompt: ' + !!prompt);
 
   try {
+    // 폴링 모드: predId가 있으면 결과 확인만 함
     if (predId) {
       const poll = await fetch('https://api.replicate.com/v1/predictions/' + predId, {
         headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
       });
       const pd = await poll.json();
-      console.log('poll status:', pd.status);
+      console.log('Poll status: ' + pd.status);
       return {
         statusCode: 200,
         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
@@ -29,30 +27,34 @@ exports.handler = async (event) => {
       };
     }
 
+    // 생성 모드: 새 예측 시작
     console.log('Starting prediction...');
-    const res = await fetch('https://api.replicate.com/v1/models/stability-ai/stable-diffusion/predictions', {
+
+    // SDXL 모델 사용 (버전 해시 포함)
+    const res = await fetch('https://api.replicate.com/v1/models/stability-ai/sdxl/predictions', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + REPLICATE_KEY,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Prefer': 'respond-async'
       },
       body: JSON.stringify({
         input: {
-          prompt: prompt,
-          negative_prompt: 'background, color fill, realistic, photo, 3d render, bad anatomy, blurry',
+          prompt: prompt || 'webtoon style sketch, simple line art, no background, single character standing pose, clean outlines, manga style, black and white',
+          negative_prompt: 'background, color, shading, realistic, photo, detailed, complex',
           width: 512,
-          height: 512,
+          height: 768,
           num_inference_steps: 20,
-          guidance_scale: 7.5
+          guidance_scale: 7
         }
       })
     });
 
     const data = await res.json();
-    console.log('Prediction response:', JSON.stringify(data).substring(0, 200));
-    
-    if (data.error) {
-      return { statusCode: 400, body: JSON.stringify({ error: data.error }) };
+    console.log('Prediction response: ' + JSON.stringify(data).substring(0, 100));
+
+    if (!data.id) {
+      return { statusCode: 400, body: JSON.stringify({ error: data.detail || '예측 시작 실패' }) };
     }
 
     return {
@@ -62,7 +64,7 @@ exports.handler = async (event) => {
     };
 
   } catch (e) {
-    console.log('Error:', e.message);
+    console.log('Error: ' + e.message);
     return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
   }
 };
