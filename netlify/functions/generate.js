@@ -31,14 +31,14 @@ exports.handler = async (event) => {
     console.log('Starting prediction...');
 
     // SDXL 모델 사용 (버전 해시 포함)
-    const res = await fetch('https://api.replicate.com/v1/models/stability-ai/sdxl/predictions', {
+    const res = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + REPLICATE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'respond-async'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        version: '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
         input: {
           prompt: prompt || 'webtoon style sketch, simple line art, no background, single character standing pose, clean outlines, manga style, black and white',
           negative_prompt: 'background, color, shading, realistic, photo, detailed, complex',
